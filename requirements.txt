@@ -1,0 +1,6 @@
+mnemonic==0.18
+web3==4.1.0
+eth-keyfile==0.5.1
+eth-keys==0.2.0b3
+eth-utils==1.0.2
+base58==0.2.5
