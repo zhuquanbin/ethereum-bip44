@@ -171,6 +171,36 @@ class EtherCommon(object):
 
             raise EtherError({"err": u"交易异常！", "exception": str(e), "code": 5000})
 
+    def web3py_contract_deploy(self, w3, nonce, abi, bytecode, args):
+        """
+        TODO 远程部署智能合约
+        :param w3:   Web3 实例
+        :param abi:   智能合约编译的 abi
+        :param bytecode: 智能合约编译bin code
+        :return: tx_hash
+        """
+        from web3.utils.transactions import (
+            fill_transaction_defaults,
+        )
+        if not isinstance(w3, Web3):
+            raise EtherError({ "err": u"无效的Web3实例！", "code": 4000})
+
+        contract = w3.eth.contract(abi = abi, bytecode = bytecode)
+        deploy_contract = contract.constructor(args)
+        gas = deploy_contract.estimateGas()
+        deploy_transaction = fill_transaction_defaults(w3, {
+            "from": to_checksum_address(self.address),
+            "to": "0x",
+            "nonce": nonce,
+            "gas": gas,
+            "gasPrice": w3.eth.gasPrice,
+            "chainId": int(w3.net.chainId),
+            "data" : deploy_contract.data_in_transaction
+        })
+
+        signed_txn = w3.eth.account.signTransaction(deploy_transaction, self.private_key)
+        tx_hash = w3.eth.sendRawTransaction(signed_txn.rawTransaction)
+        return bytes_to_str(tx_hash)
 
     def web3py_contract_transaction(self, w3, contract, to, value, nonce=None, chain_id=None, gas_price=None):
         """
@@ -202,7 +232,7 @@ class EtherCommon(object):
             _chainid    = chain_id if chain_id  else int(w3.net.chainId)
             _nonce      = nonce if nonce else w3.eth.getTransactionCount(to_checksum_address(self.address))
             tx_transfer = contract.functions.transfer(to_address, value)
-            _gas        = tx_transfer.estimateGas()
+            _gas        = tx_transfer.estimateGas({"from": to_checksum_address(self.address)})
             contract_tx = tx_transfer.buildTransaction({
                 'chainId'   : _chainid,
                 'gas'       : _gas,

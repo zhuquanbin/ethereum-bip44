@@ -1,4 +1,5 @@
 mnemonic==0.18
+rlp == 0.6.0
 web3==4.1.0
 eth-keyfile==0.5.1
 eth-keys==0.2.0b3
